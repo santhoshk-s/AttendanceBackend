@@ -198,82 +198,6 @@ const countTotalemails = async (req, res) => {
   }
 };
 
-const getTime = asyncHandler(async (req, res) => {
-  try {
-      const currentTime = await new Promise((resolve) => {
-          const now = new Date();
-          const hours = String(now.getHours()).padStart(2, '0');
-          const minutes = String(now.getMinutes()).padStart(2, '0');
-          const seconds = String(now.getSeconds()).padStart(2, '0');
-          resolve(`${hours}:${minutes}:${seconds}`);
-      });
-      res.json({ time: currentTime });
-  } catch (error) {
-      console.error('Error getting time:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-//create attandence data include arrival and dispature
-const createAttendance =  asyncHandler(async (req, res) => {
-  const { name, emailId, ipAddress } = req.body;
-
-  try {
-    const todayDate = new Date();
-    console.log(todayDate)
-    const existingRecord = await Attendance.findOne({ emailId, arrivaldate: todayDate });
-    if (!existingRecord) {
-      // Create a new record if it doesn't exist
-      const newRecord = new Attendance({
-        name,
-        emailId,
-        ipAddress,
-        arrivaldate: todayDate,
-        arrivalTime: new Date(),
-        departureTime:null,
-        departureDate:null
-      });
-
-      await newRecord.save();
-      res.json({ success: true, message: 'Arrival record created', data: newRecord });
-    } else {
-      res.json({ success: false, message: 'Attendance record already exists for today' });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-//update departure time
-
-const updateDepartureTime =  asyncHandler(async (req, res) => {
-  const { _id } = req.params;
-
-  try {
-     const todayDate = new Date();
-     const existingRecord = await Attendance.findById({_id});
-
-     if (existingRecord) {
-       if (new Date().getHours() >= 18) {
-         if (!existingRecord.departureTime) {
-           existingRecord.departureDate = todayDate;
-           existingRecord.departureTime = new Date()
-          await existingRecord.save();
-          res.json({ success: true, message: 'Departure record updated', data: existingRecord });
-        } else {
-          res.json({ success: false, message: 'Departure record already exists for today' });
-        }
-      } else {
-        //need to update for departure time before 5 pm
-        res.json({ success: false, message: 'Cannot update departure time before 5 PM' });
-      }
-    } else {
-      res.status(404).json({ success: false, message: 'No arrival record found for today' });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
 module.exports = {
   getLoggedInUser,
   ProfileUpdate,
@@ -284,7 +208,4 @@ module.exports = {
   logoutCurrentUser,
   countTotalemails,
   getAllUsers,
-  getTime,
-  createAttendance,
-  updateDepartureTime,
 };
