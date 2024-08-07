@@ -6,9 +6,13 @@ const path = require("path");
 const crypto = require("crypto");
 const { GridFsStorage } = require("multer-gridfs-storage");
 const router = express.Router();
+require('dotenv').config();
+
+const url = process.env.STORAGE_URL;
+
 
 // Mongo URI
-const mongoURI = "mongodb+srv://sanooppr2002:sanoopUltrafly@cluster0.cbv1yfl.mongodb.net/ultrafly?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = url;
 
 // Create mongo connection
 const conn = mongoose.createConnection(mongoURI, {
