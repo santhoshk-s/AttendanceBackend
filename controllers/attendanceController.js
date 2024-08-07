@@ -1,11 +1,7 @@
 const Attendance = require("../modals/attendanceSchema")
 const asyncHandler = require("../middlewares/asyncHandler");
 
-  function trimDate(today) {
-    return today.toISOString().split('T')[0]; // YYYY-MM-DD format
-  }
 
-  
 //create attandence data include arrival and dispature
 const createAttendance =  asyncHandler(async (req, res) => {
     const { emailId, name, arrivalDate, arrivalTime,remarks } = req.body;
@@ -33,10 +29,6 @@ const createAttendance =  asyncHandler(async (req, res) => {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
-  function isAfterFivePM() {
-    const currentTime = new Date();
-    return currentTime.getHours() >= 17; // 5 PM is 17:00 in 24-hour format
-  }
 //update departure time
 
 const updateDepartureTime =  asyncHandler(async (req, res) => {
@@ -46,7 +38,7 @@ const updateDepartureTime =  asyncHandler(async (req, res) => {
       const existingRecord = await Attendance.findOne({ emailId,arrivalDate });
       if(!existingRecord) return res.json({ message: "your email is not valid or you are not upadated arrival", });
       if (!existingRecord.departureDate) {
-        if(isAfterFivePM){
+        if(new Date().getHours >=17){
         existingRecord.departureDate = departureDate;
         existingRecord.departureTime = departureTime;
         existingRecord.status = 'pending';
@@ -57,6 +49,9 @@ const updateDepartureTime =  asyncHandler(async (req, res) => {
           message: "departute  updated",
         });
       }else{
+        existingRecord.departureDate = departureDate;
+        existingRecord.departureTime = departureTime;
+        existingRecord.status = 'pending';
       existingRecord.remarks=remarks;
       await existingRecord.save()
       res.json({ message: "you can't update departure time before 5 PM" });
@@ -89,6 +84,8 @@ const updateDepartureTime =  asyncHandler(async (req, res) => {
             await existingRecord.save();
             res.json({ success: true, message: 'Departure approved', data: existingRecord });
           } else {
+            existingRecord.departureDate = "";
+            existingRecord.departureTime = "";
             existingRecord.status = 'rejected';
             await existingRecord.save();
             res.json({ success: true, message: 'Departure rejected', data: existingRecord });

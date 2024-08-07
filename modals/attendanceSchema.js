@@ -36,7 +36,6 @@ const attendanceSchema = mongoose.Schema(
     },
     status:{
       type:String,
-      default:'pending', 
     },
     remarks:{
       type:String,      

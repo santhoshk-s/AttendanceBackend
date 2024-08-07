@@ -8,7 +8,7 @@ const { GridFsStorage } = require("multer-gridfs-storage");
 const router = express.Router();
 require('dotenv').config();
 
-const url = process.env.STORAGE_URL;
+const url = process.env.ATLAS_URL;
 
 
 // Mongo URI
