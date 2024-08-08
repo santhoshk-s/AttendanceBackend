@@ -35,7 +35,8 @@ const attendanceSchema = mongoose.Schema(
       /*  required: true, */
     },
     status:{
-      type:String,
+      type:Boolean,
+      default:false
     },
     remarks:{
       type:String,      
