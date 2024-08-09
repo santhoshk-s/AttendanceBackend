@@ -7,7 +7,7 @@ const createAttendance = asyncHandler(async (req, res) => {
   const startOfDay = new Date(today.setHours(0, 0, 0, 0));
   const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-  const { emailId, name, arrivalDate, arrivalTime, remarks } = req.body;
+  const { emailId, name } = req.body;
   try {
     const existingRecord = await Attendance.findOne({
       emailId,
@@ -48,20 +48,23 @@ const updateDepartureTime = asyncHandler(async (req, res) => {
   const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
   // Define the target time
-  const targetHour = 20;
-  const targetMinute = 0o1;
+  const targetHour = 19;
+  const targetMinute = 30;
   const isAfterTargetTime =
     currentHour > targetHour ||
     (currentHour === targetHour && currentMinute >= targetMinute);
 
-  const { emailId, arrivalDate, departureDate, departureTime, remarks } =
+  const { emailId, remarks } =
     req.body;
 
   try {
-    const existingRecord = await Attendance.findOne({ emailId, createdAt: {
-      $gte: startOfDay,
-      $lt: endOfDay
-    } });
+    const existingRecord = await Attendance.findOne({
+      emailId,
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
+    });
 
     if (!existingRecord) {
       return res.status(404).json({
@@ -133,7 +136,7 @@ const approveDeparture = asyncHandler(async (req, res) => {
     if (approve === false) {
       existingRecord.status = false;
       await existingRecord.save();
-      return res.json({ success: true, message: "Rejected." });
+      return res.json({ success: false, message: "Rejected." });
     }
 
     if (approve === true) {
@@ -158,10 +161,13 @@ const getUserAttendance = asyncHandler(async (req, res) => {
   const startOfDay = new Date(today.setHours(0, 0, 0, 0));
   const endOfDay = new Date(today.setHours(23, 59, 59, 999));
   try {
-    const record = await Attendance.findOne({ emailId, createdAt: {
-      $gte: startOfDay,
-      $lt: endOfDay
-    } });
+    const record = await Attendance.findOne({
+      emailId,
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
+    });
     if (record) {
       res.json({
         success: true,
@@ -189,10 +195,102 @@ const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
+// Get today's updated attendance
+const getTodayAttendance = asyncHandler(async (req, res) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  try {
+    const employees = await Attendance.find({
+      updatedAt: { $gte: todayStart, $lte: todayEnd },
+    });
+    return res.json({
+      success: true,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+const getLastWeekAttendance = asyncHandler(async (req, res) => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  try {
+    const employees = await Attendance.find({ updatedAt: { $gte: weekAgo } });
+    return res.json({
+      success: true,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+const getLastMonthAttendance = asyncHandler(async (req, res) => {
+  const monthAgo = new Date();
+  monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+  try {
+    const employees = await Attendance.find({ updatedAt: { $gte: monthAgo } });
+    return res.json({
+      success: true,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+const getAttendanceByName = asyncHandler(async (req, res) => {
+  const { emailId } = req.body;
+
+  try {
+    const employees = await Attendance.find({ emailId });
+    return res.json({
+      success: true,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+const getRangeSelectedAttendance = asyncHandler(async (req, res) => {
+  const { fromDate, toDate } = req.body;
+
+  const todayStart = new Date(fromDate);
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date(toDate);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  try {
+    const employees = await Attendance.find({
+      updatedAt: { $gte: todayStart, $lte: todayEnd },
+    });
+    return res.json({
+      success: true,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = {
   createAttendance,
   updateDepartureTime,
   approveDeparture,
   getUserAttendance,
   getAllUsers,
+  getTodayAttendance,
+  getLastWeekAttendance,
+  getLastMonthAttendance,
+  getAttendanceByName,
+  getRangeSelectedAttendance,
 };
