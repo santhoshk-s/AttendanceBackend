@@ -12,35 +12,21 @@ const attendanceSchema = mongoose.Schema(
     },
     ipAddress: {
       type: String,
-      /* required: true, */
-      /* validate: {
-          validator: function(v) {
-            return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(v);
-          },
-          message: props => `${props.value} is not a valid IP address!`
-        } */
     },
     arrivalDate: {
-      type: String,    },
-    arrivalTime: {
-      type: String,
-      /* required: true, */
+      type: Date,
+       default: Date.now,
     },
     departureDate: {
+      type: Date,
+    },
+    status: {
+      type: Boolean,
+      default: false,
+    },
+    remarks: {
       type: String,
-      /*   required:true, */
     },
-    departureTime: {
-      type: String,
-      /*  required: true, */
-    },
-    status:{
-      type:Boolean,
-      default:false
-    },
-    remarks:{
-      type:String,      
-    }
   },
   { timestamps: true }
 );
