@@ -3,17 +3,23 @@ const asyncHandler = require("../middlewares/asyncHandler");
 
 //create attandence data include arrival and dispature
 const createAttendance = asyncHandler(async (req, res) => {
+  const today = new Date();
+  const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
   const { emailId, name, arrivalDate, arrivalTime, remarks } = req.body;
-console.log(remarks)
   try {
-    const existingRecord = await Attendance.findOne({ emailId, arrivalDate });
+    const existingRecord = await Attendance.findOne({
+      emailId,
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
+    });
     if (!existingRecord) {
       const newRecord = new Attendance({
         name,
         emailId,
-        arrivalDate,
-        arrivalTime,
-        remarks,
       });
       await newRecord.save();
       res.json({
@@ -38,18 +44,25 @@ const updateDepartureTime = asyncHandler(async (req, res) => {
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
+  const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+
   // Define the target time
-  const targetHour = 17;
+  const targetHour = 20;
   const targetMinute = 0o1;
   const isAfterTargetTime =
     currentHour > targetHour ||
     (currentHour === targetHour && currentMinute >= targetMinute);
 
-  const { emailId, arrivalDate, departureDate, departureTime, remarks } = req.body;
+  const { emailId, arrivalDate, departureDate, departureTime, remarks } =
+    req.body;
 
   try {
-    const existingRecord = await Attendance.findOne({ emailId, arrivalDate });
-    
+    const existingRecord = await Attendance.findOne({ emailId, createdAt: {
+      $gte: startOfDay,
+      $lt: endOfDay
+    } });
+
     if (!existingRecord) {
       return res.status(404).json({
         message: "Your email is not valid or you have not updated arrival.",
@@ -63,21 +76,27 @@ const updateDepartureTime = asyncHandler(async (req, res) => {
     }
 
     if (isAfterTargetTime) {
-      existingRecord.departureDate = departureDate;
-      existingRecord.departureTime = departureTime;
+      existingRecord.departureDate = new Date();
       await existingRecord.save();
       return res.json({ message: "Updated departure time successfully." });
-    } 
+    }
 
     if (!isAfterTargetTime) {
-      if (existingRecord.remarks && existingRecord.remarks.trim() !== "" && existingRecord.status === true) {
-        existingRecord.departureDate = departureDate;
-        existingRecord.departureTime = departureTime;
+      if (
+        existingRecord.remarks &&
+        existingRecord.remarks.trim() !== "" &&
+        existingRecord.status === true
+      ) {
+        existingRecord.departureDate = new Date();
         await existingRecord.save();
         return res.json({ message: "Updated departure time successfully." });
       }
 
-      if (existingRecord.remarks && existingRecord.remarks.trim() !== "" && existingRecord.status === false) {
+      if (
+        existingRecord.remarks &&
+        existingRecord.remarks.trim() !== "" &&
+        existingRecord.status === false
+      ) {
         return res.json({ message: "Wait for admin response." });
       }
 
@@ -92,10 +111,11 @@ const updateDepartureTime = asyncHandler(async (req, res) => {
 
     return res.json({ message: "Something went wrong." });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 });
-
 
 // Admin approval endpoint
 const approveDeparture = asyncHandler(async (req, res) => {
@@ -105,14 +125,16 @@ const approveDeparture = asyncHandler(async (req, res) => {
     const existingRecord = await Attendance.findById(_id);
 
     if (!existingRecord) {
-      return res.status(404).json({ success: false, message: "Attendance record not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Attendance record not found." });
     }
 
     if (approve === false) {
       existingRecord.status = false;
       await existingRecord.save();
       return res.json({ success: true, message: "Rejected." });
-    } 
+    }
 
     if (approve === true) {
       existingRecord.status = true;
@@ -120,18 +142,26 @@ const approveDeparture = asyncHandler(async (req, res) => {
       return res.json({ success: true, message: "Approved." });
     }
 
-    return res.status(400).json({ success: false, message: "Invalid approval status." });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid approval status." });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Internal server error", error });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error", error });
   }
 });
 
 const getUserAttendance = asyncHandler(async (req, res) => {
   const { emailId } = req.params;
-  const options = { day: "2-digit", month: "2-digit", year: "2-digit" };
-  const arrivalDate = new Date().toLocaleDateString("en-GB", options);
+  const today = new Date();
+  const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(today.setHours(23, 59, 59, 999));
   try {
-    const record = await Attendance.findOne({ emailId, arrivalDate });
+    const record = await Attendance.findOne({ emailId, createdAt: {
+      $gte: startOfDay,
+      $lt: endOfDay
+    } });
     if (record) {
       res.json({
         success: true,
