@@ -39,7 +39,8 @@ const userSchema = mongoose.Schema(
       type:String
     },
     DateOfjoining:{
-      type:String
+      type: Date,
+      default: Date.now
     },
     position:{
       type:String

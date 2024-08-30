@@ -1,5 +1,10 @@
 const Attendance = require("../modals/attendanceSchema");
 const asyncHandler = require("../middlewares/asyncHandler");
+const { networkInterfaces } = require("os");
+const dns = require("dns");
+
+const ipAddress = "192.168.31.1";
+
 
 //create attandence data include arrival and dispature
 const createAttendance = asyncHandler(async (req, res) => {
@@ -8,6 +13,14 @@ const createAttendance = asyncHandler(async (req, res) => {
   const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
   const { emailId, name } = req.body;
+
+  if (ipAddress !== dns.getServers()[0]) {
+    return res.status(401).json({
+      success: false,
+      message: "You are not in office location",
+    });
+  }
+
   try {
     const existingRecord = await Attendance.findOne({
       emailId,
@@ -22,19 +35,21 @@ const createAttendance = asyncHandler(async (req, res) => {
         emailId,
       });
       await newRecord.save();
-      res.json({
+      return res.json({
         success: true,
         message: "Arrival record created",
         data: newRecord,
       });
     } else {
-      res.json({
+      return res.json({
         success: false,
         message: "Attendance record already exists for today",
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 });
 //update departure time
@@ -54,8 +69,8 @@ const updateDepartureTime = asyncHandler(async (req, res) => {
     currentHour > targetHour ||
     (currentHour === targetHour && currentMinute >= targetMinute);
 
-  const { emailId, remarks } =
-    req.body;
+  const { emailId, remarks } = req.body;
+
 
   try {
     const existingRecord = await Attendance.findOne({
@@ -169,12 +184,12 @@ const getUserAttendance = asyncHandler(async (req, res) => {
       },
     });
     if (record) {
-      res.json({
+      return res.json({
         success: true,
         data: record,
       });
     } else {
-      res
+      return res
         .status(404)
         .json({ success: false, message: "Attendance record not found" });
     }
@@ -185,8 +200,8 @@ const getUserAttendance = asyncHandler(async (req, res) => {
 // Get all users
 const getAllUsers = asyncHandler(async (req, res) => {
   try {
-    const records = await Attendance.find();
-    res.json({
+    const records = await Attendance.find().sort({ arrivalDate: -1 });
+    return res.json({
       success: true,
       data: records,
     });

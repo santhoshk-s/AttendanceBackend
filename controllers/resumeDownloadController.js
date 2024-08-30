@@ -11,7 +11,6 @@ conn.once('open', () => {
 let gfs;
 const downloadFile = async (req, res) => {
   const { pdfId } = req.params;
-  console.log('PDF ID:', pdfId); // Debug log
 
   try {
     // Ensure pdfId is a valid ObjectId
@@ -45,6 +44,7 @@ const downloadFile = async (req, res) => {
 
 const getResume = (req, res) => {
   const { filename } = req.params;
+  console.log('pdf',filename)
   gfs.files.findOne({ filename }, (err, file) => {
       if (err) return res.status(500).json({ error: 'Error fetching file' });
       if (!file) return res.status(404).json({ error: 'No file exists' });

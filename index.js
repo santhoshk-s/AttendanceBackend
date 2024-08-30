@@ -40,7 +40,7 @@ conn.once('open', () => {
     // Init gfs
     gfs = Grid(conn.db, mongoose.mongo);
     gfs.collection('uploads');
-
+    gfs.collection('images');
     // Use upload routes
     app.use('/api', resumeuploadRoutes);
 
