@@ -1,5 +1,5 @@
 const User = require("../modals/userModel");
-const Attendance = require("../modals/attendanceSchema")
+const Attendance = require("../modals/attendanceSchema");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("../middlewares/asyncHandler");
@@ -16,13 +16,10 @@ const createUser = asyncHandler(async (req, res) => {
   const userExists = await User.findOne({ email });
 
   if (userExists) {
-    res
-      .status(400)
-      .json({
-        message:
-          "User with this email already exists, please choose another email",
-      });
-    return;
+    return res.status(400).json({
+      message:
+        "User with this email already exists, please choose another email",
+    });
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -145,30 +142,45 @@ const UpdateUsers = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
-      message: `User successfully promoted to Admin`, // Success message
+      message: `User successfully promoted to Admin`,
     });
   } else {
     res.status(404);
-    throw new Error("User not found. Please check the provided ID."); // More descriptive error message
+    throw new Error("User not found. Please check the provided ID.");
   }
 });
 
 const ProfileUpdate = asyncHandler(async (req, res) => {
   try {
-    // const { username, birthdate, email, gender,employeeCode,DateOfjoining,position } = req.body;
-    // console.log(username, birthdate, email, gender,employeeCode,DateOfjoining,position);
+    // const {userId,username,email,gender,birthdate,employeeCode,DateOfjoining,position} = req.body;
+    let image = req.file;
 
-    const project = await User.findByIdAndUpdate(req.params.id, {
+    const user = await User.findById(req.params.id);
+
+    if (image) {
+      image = image.filename;
+    } else {
+      image = user.image;
+    }
+
+    const updateFields = {
+      image,
       ...req.body,
-    });
+    };
+    
+    for (const key in updateFields) {
+      if (updateFields[key] === '') {
+        delete updateFields[key];
+      }
+    }
 
-    await project.save();
-
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, updateFields, { new: true });
     res.json({
       success: true,
       message: "Profile updated successfully",
-      project,
+      updatedUser,
     });
+
   } catch (error) {
     console.error(error);
     res.status(400).json({ success: false, message: error.message });
@@ -180,7 +192,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   const result = await User.findByIdAndDelete(req.params.id);
 
   if (result) {
-    res.json({
+    return res.json({
       message: "User removed successfully",
     });
   } else {
@@ -198,6 +210,19 @@ const countTotalemails = async (req, res) => {
   }
 };
 
+const findUser = async (req,res)=>{
+  try {
+    const {email} = req.params
+    const user = await User.findOne({email})
+    return res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 module.exports = {
   getLoggedInUser,
   ProfileUpdate,
@@ -208,4 +233,5 @@ module.exports = {
   logoutCurrentUser,
   countTotalemails,
   getAllUsers,
+  findUser
 };

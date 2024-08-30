@@ -1,7 +1,7 @@
 // routes/uploadRoutes.js
 const express = require('express');
 const multer = require('multer');
-const storage = require('../config/storage');
+const {storage} = require('../config/storage');
 const uploadController = require('../controllers/resumeUploadHandler');
 const {getFilesByJobType}=require('../controllers/resumeFetchHandler')
 const {downloadFile,getResume}=require('../controllers/resumeDownloadController')
